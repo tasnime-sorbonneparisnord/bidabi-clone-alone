@@ -1,17 +1,15 @@
+import argparse
 import asyncio
 import csv
 import os
 from aiohttp import ClientSession, ClientTimeout
-import aiohttp
 
 API_URL = "https://world.openfoodfacts.org/cgi/search.pl"
 HEADERS = {"User-Agent": "MyAwesomeApp/1.0"}
 
 OUTPUT_DIR = "data/raw"
 
-# Mets ici au moins 3 catégories
-CATEGORIES = ["sugar", "milk", "bread"]
-
+DEFAULT_CATEGORIES = ["sugar", "milk", "bread"]
 TARGET_COUNT = 180
 PAGE_SIZE = 100
 MAX_PAGES = 50
@@ -156,12 +154,47 @@ def save_to_csv(filename, rows):
 # Entry point
 # -------------------------
 def main():
-    os.makedirs(f"{OUTPUT_DIR}/images", exist_ok=True)
+    parser = argparse.ArgumentParser(
+        description="Scrape 3 categories from the OpenFoodFacts API and save images/metadata"
+    )
+    parser.add_argument(
+        "--categories",
+        nargs="+",
+        default=DEFAULT_CATEGORIES,
+        help="Liste des catégories OpenFoodFacts à scraper",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=OUTPUT_DIR,
+        help="Répertoire de sortie pour les images et les fichiers CSV",
+    )
+    parser.add_argument(
+        "--target-count",
+        type=int,
+        default=TARGET_COUNT,
+        help="Nombre minimum de produits valides à récupérer par catégorie",
+    )
+    parser.add_argument(
+        "--page-size",
+        type=int,
+        default=PAGE_SIZE,
+        help="Nombre de produits demandés par page API",
+    )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=MAX_PAGES,
+        help="Nombre maximal de pages à parcourir par catégorie",
+    )
+    args = parser.parse_args()
 
-    for category in CATEGORIES:
+    output_dir = args.output_dir
+    os.makedirs(f"{output_dir}/images", exist_ok=True)
+
+    for category in args.categories:
         print(f"\n===== Catégorie : {category} =====")
-        products = asyncio.run(scrape(category, TARGET_COUNT, PAGE_SIZE, MAX_PAGES))
-        output_file = f"{OUTPUT_DIR}/metadata_{category}_{TARGET_COUNT}.csv"
+        products = asyncio.run(scrape(category, args.target_count, args.page_size, args.max_pages))
+        output_file = f"{output_dir}/metadata_{category}_{args.target_count}.csv"
         save_to_csv(output_file, products)
         print(f"✔ Fichier {output_file} créé. Produits valides collectés : {len(products)}")
 

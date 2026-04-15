@@ -1,0 +1,17 @@
+stages:
+  prepare:
+    cmd: python src/data_prepare.py --images-dir data/raw/images --output-dir data --val-ratio 0.2 --test-ratio 0.2 --seed 42
+    deps:
+      - src/data_prepare.py
+      - data/raw/images
+    outs:
+      - data/train
+      - data/val
+      - data/test
+  train:
+    cmd: python main.py --data-dir data --output-dir model --epochs 20 --batch-size 32 --lr 1e-5 --seed 42
+    deps:
+      - main.py
+      - src/classificator.py
+      - data/train
+      - data/val
