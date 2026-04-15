@@ -212,8 +212,7 @@ data/interim/
 data/train/
 data/val/
 data/test/
-model/
-!model/
+model/*
 !model/*.dvc
 
 data/localstore/
