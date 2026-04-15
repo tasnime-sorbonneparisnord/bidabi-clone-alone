@@ -7,7 +7,7 @@ from aiohttp import ClientSession, ClientTimeout
 API_URL = "https://world.openfoodfacts.org/cgi/search.pl"
 HEADERS = {"User-Agent": "MyAwesomeApp/1.0"}
 
-OUTPUT_DIR = "data"
+OUTPUT_DIR = "data/raw"
 
 CATEGORY = "sugar" #"bread", "milk", "champagnes", "butter" 
 TARGET_COUNT = 180
