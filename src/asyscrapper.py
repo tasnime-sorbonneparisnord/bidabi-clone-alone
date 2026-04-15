@@ -9,7 +9,7 @@ HEADERS = {"User-Agent": "MyAwesomeApp/1.0"}
 
 OUTPUT_DIR = "data/raw"
 
-CATEGORY = "sugar" #"bread", "milk", "champagnes", "butter" 
+CATEGORY = "sugar"  # "bread", "milk", "champagnes", "butter"
 TARGET_COUNT = 180
 PAGE_SIZE = 100
 MAX_PAGES = 50
@@ -43,7 +43,7 @@ def extract_product_info(product):
         product.get("product_name"),
         ", ".join(product.get("categories_tags", [])),
         product.get("ingredients_text", ""),
-        get_best_image(product)
+        get_best_image(product),
     ]
 
 
@@ -58,7 +58,7 @@ async def fetch_page(session, category, page, page_size, sem):
         "tag_0": category,
         "page": page,
         "page_size": page_size,
-        "json": 1
+        "json": 1,
     }
 
     async with sem:
@@ -74,10 +74,11 @@ async def fetch_page(session, category, page, page_size, sem):
 # -------------------------
 # Async image download
 # -------------------------
-async def download_image(session, url, image_id, sem, folder="data/images/sugar"):
+async def download_image(session, url, image_id, category, sem):
     if not url:
         return
 
+    folder = f"{OUTPUT_DIR}/images/{category}"
     os.makedirs(folder, exist_ok=True)
 
     ext = url.split(".")[-1].split("?")[0]
@@ -126,7 +127,7 @@ async def scrape(category, target_count, page_size, max_pages):
                     image_id = info[0]
 
                     task = asyncio.create_task(
-                        download_image(session, image_url, image_id, sem_img)
+                        download_image(session, image_url, image_id, category, sem_img)
                     )
                     image_tasks.append(task)
 
