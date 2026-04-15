@@ -1,15 +1,17 @@
 import asyncio
-import aiohttp
 import csv
 import os
 from aiohttp import ClientSession, ClientTimeout
+import aiohttp
 
 API_URL = "https://world.openfoodfacts.org/cgi/search.pl"
 HEADERS = {"User-Agent": "MyAwesomeApp/1.0"}
 
 OUTPUT_DIR = "data/raw"
 
-CATEGORY = "sugar"  # "bread", "milk", "champagnes", "butter"
+# Mets ici au moins 3 catégories
+CATEGORIES = ["sugar", "milk", "bread"]
+
 TARGET_COUNT = 180
 PAGE_SIZE = 100
 MAX_PAGES = 50
@@ -67,7 +69,7 @@ async def fetch_page(session, category, page, page_size, sem):
                 data = await resp.json()
                 return data.get("products", [])
         except Exception as e:
-            print(f"⚠ Erreur API page {page} :", e)
+            print(f"⚠ Erreur API page {page} pour {category} :", e)
             return []
 
 
@@ -111,11 +113,11 @@ async def scrape(category, target_count, page_size, max_pages):
         page = 1
 
         while len(valid_products) < target_count and page <= max_pages:
-            print(f"→ Téléchargement page {page}…")
+            print(f"→ Téléchargement page {page} pour {category}...")
 
             products = await fetch_page(session, category, page, page_size, sem_api)
             if not products:
-                print("Aucun produit trouvé sur cette page.")
+                print(f"Aucun produit trouvé sur cette page pour {category}.")
                 break
 
             for product in products:
@@ -154,10 +156,14 @@ def save_to_csv(filename, rows):
 # Entry point
 # -------------------------
 def main():
-    products = asyncio.run(scrape(CATEGORY, TARGET_COUNT, PAGE_SIZE, MAX_PAGES))
-    output_file = f"{OUTPUT_DIR}/metadata_{CATEGORY}_{TARGET_COUNT}.csv"
-    save_to_csv(output_file, products)
-    print(f"✔ Fichier {output_file} créé. Produits valides collectés : {len(products)}")
+    os.makedirs(f"{OUTPUT_DIR}/images", exist_ok=True)
+
+    for category in CATEGORIES:
+        print(f"\n===== Catégorie : {category} =====")
+        products = asyncio.run(scrape(category, TARGET_COUNT, PAGE_SIZE, MAX_PAGES))
+        output_file = f"{OUTPUT_DIR}/metadata_{category}_{TARGET_COUNT}.csv"
+        save_to_csv(output_file, products)
+        print(f"✔ Fichier {output_file} créé. Produits valides collectés : {len(products)}")
 
 
 if __name__ == "__main__":
